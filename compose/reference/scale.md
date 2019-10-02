@@ -6,10 +6,16 @@ notoc: true
 ---
 
 > **Note**: This command is deprecated. Use the [up](up.md) command with the
-  `--scale` flag instead.
+  `--scale` flag instead. Beware that using `up` with `--scale` flag has some
+  [subtle differences](https://github.com/docker/compose/issues/5251) with the `scale` command as it incorporates the behaviour
+  of `up` command.
 
 ```
-Usage: scale [SERVICE=NUM...]
+Usage: scale [options] [SERVICE=NUM...]
+
+Options:
+  -t, --timeout TIMEOUT      Specify a shutdown timeout in seconds.
+                             (default: 10)
 ```
 
 Sets the number of containers to run for a service.

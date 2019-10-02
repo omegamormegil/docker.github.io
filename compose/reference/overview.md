@@ -21,9 +21,12 @@ Usage:
   docker-compose -h|--help
 
 Options:
-  -f, --file FILE             Specify an alternate Compose file (default: docker-compose.yml)
-  -p, --project-name NAME     Specify an alternate project name (default: directory name)
+  -f, --file FILE             Specify an alternate compose file
+                              (default: docker-compose.yml)
+  -p, --project-name NAME     Specify an alternate project name
+                              (default: directory name)
   --verbose                   Show more output
+  --log-level LEVEL           Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   --no-ansi                   Do not print ANSI control characters
   -v, --version               Print version and exit
   -H, --host HOST             Daemon socket to connect to
@@ -33,11 +36,12 @@ Options:
   --tlscert CLIENT_CERT_PATH  Path to TLS certificate file
   --tlskey TLS_KEY_PATH       Path to TLS key file
   --tlsverify                 Use TLS and verify the remote
-  --skip-hostname-check       Don't check the daemon's hostname against the name specified
-                              in the client certificate (for example if your docker host
-                              is an IP address)
+  --skip-hostname-check       Don't check the daemon's hostname against the
+                              name specified in the client certificate
   --project-directory PATH    Specify an alternate working directory
                               (default: the path of the Compose file)
+  --compatibility             If set, Compose will attempt to convert deploy
+                              keys in v3 files to their non-Swarm equivalent
 
 Commands:
   build              Build or rebuild services
@@ -66,7 +70,6 @@ Commands:
   unpause            Unpause services
   up                 Create and start containers
   version            Show the Docker-Compose version information
-
 ```
 
 You can use Docker Compose binary, `docker-compose [-f <arg>...] [options]
@@ -126,10 +129,10 @@ in addition to the values in the `docker-compose.yml` file.
 
 ### Specifying a path to a single Compose file
 
-You can use `-f` flag to specify a path to Compose file that is not located in
-the current directory, either from the command line or by setting up a
-[COMPOSE_FILE environment variable](envvars.md#compose_file) in your shell or in
-an environment file.
+You can use the `-f` flag to specify a path to a Compose file that is not
+located in the current directory, either from the command line or by setting up
+a [COMPOSE_FILE environment variable](envvars.md#compose_file) in your shell or
+in an environment file.
 
 For an example of using the `-f` option at the command line, suppose you are
 running the [Compose Rails sample](/compose/rails/), and

@@ -32,7 +32,7 @@ should already have Machine installed. If you need to install, see the
 instructions for [macOS](/docker-for-mac/) or
 [Windows](/docker-for-windows/).
 
-Machine supports installing on AWS, Digital Ocean, Google Cloud Platform, IBM
+Machine supports installing on AWS, DigitalOcean, Google Cloud Platform, IBM
 Softlayer, Microsoft Azure and Hyper-V, OpenStack, Rackspace, VirtualBox, VMware
 Fusion&reg;, vCloud&reg; Air<sup>TM</sup> and vSphere&reg;. This example uses
 VirtualBox to run several VMs based on the `boot2docker.iso` image.
@@ -55,7 +55,7 @@ host called `local`, do the following:
 docker-machine create -d virtualbox local
 ```
 
-This examples uses VirtualBox but it could easily be DigitalOcean or a host on
+This example uses VirtualBox but it could easily be DigitalOcean or a host on
 your data center. The `local` value is the host name. Once you create it,
 configure your terminal's shell environment to interact with the `local` host.
 
@@ -120,7 +120,7 @@ docker-machine create \
 For example, you might use `node-01` as the `HOST_NODE_NAME` in the previous
 example.
 
->**Note**: These command rely on Docker Swarm's hosted discovery service, Docker
+>**Note**: These commands rely on Docker Swarm's hosted discovery service, Docker
 Hub. If Docker Hub or your network is having issues, these commands may fail.
 Check the [Docker Hub status page](http://status.docker.com/) for service
 availability. If the problem is Docker Hub, you can wait for it to recover or

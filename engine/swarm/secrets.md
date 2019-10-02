@@ -73,7 +73,6 @@ examples below. Keep the following notable differences in mind:
   accessible by administrators and users with `system` access within the
   container.
 
-
 ## How Docker manages secrets
 
 When you add a secret to the swarm, Docker sends the secret to the swarm manager
@@ -161,7 +160,7 @@ real-world example, continue to
     secret from, is set to `-`.
 
     ```bash
-    $ echo "This is a secret" | docker secret create my_secret_data -
+    $ printf "This is a secret" | docker secret create my_secret_data -
     ```
 
 2.  Create a `redis` service and grant it access to the secret. By default,
@@ -274,7 +273,7 @@ real-world example, continue to
 
 This is a very simple example which shows how to use secrets with a Microsoft
 IIS service running on Docker 17.06 EE on Microsoft Windows Server 2016 or Docker
-for Mac 17.06 on Microsoft Windows 10. It is a naive example that stores the
+Desktop for Mac 17.06 on Microsoft Windows 10. It is a naive example that stores the
 webpage in a secret.
 
 This example assumes that you have PowerShell installed.
@@ -1028,7 +1027,7 @@ a compose file.
 The keyword `secrets:` defines two secrets `db_password:` and
 `db_root_password:`.
 
-When deploying, Docker creates these two secrets and populate them with the
+When deploying, Docker creates these two secrets and populates them with the
 content from the file specified in the compose file.
 
 The db service uses both secrets, and the wordpress is using one.

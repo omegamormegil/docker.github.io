@@ -2,8 +2,6 @@
 description: Osxfs caching
 keywords: mac, osxfs, volumes
 title: Performance tuning for volume mounts (shared filesystems)
-toc_max: 4
-toc_min: 2
 ---
 
 [Docker 17.04 CE
@@ -11,9 +9,9 @@ Edge](/edge/index.md#docker-ce-edge-new-features) adds support
 for two new flags to the [docker run `-v`,
 `--volume`](/engine/reference/run/#volume-shared-filesystems)
 option, `cached` and `delegated`, that can significantly improve the performance
-of mounted volume access on Docker for Mac. These options begin to solve some of
+of mounted volume access on Docker Desktop for Mac. These options begin to solve some of
 the challenges discussed in [Performance issues, solutions, and
-roadmap](/docker-for-mac/osxfs.md#performance-issues-solutions-and-roadmap).
+roadmap](osxfs.md#performance-issues-solutions-and-roadmap).
 
 > **Tip:** Release notes for Docker CE Edge 17.04 are
 [here](https://github.com/moby/moby/releases/tag/v17.04.0-ce), and the
@@ -193,7 +191,7 @@ visible to the host, but there may be a delay before writes performed on the
 host are visible within containers.
 
 >**Tip:** To learn more about `cached`, see the article on
-[User-guided caching in Docker for Mac](https://blog.docker.com/2017/05/user-guided-caching-in-docker-for-mac/).
+[User-guided caching in Docker Desktop for Mac](https://blog.docker.com/2017/05/user-guided-caching-in-docker-for-mac/).
 
 1. Implementations **_must_** obey `delegated` Semantics 1-5.
 

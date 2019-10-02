@@ -14,7 +14,7 @@ title: Docker Registry
 > offered as an add-on to Docker Enterprise subscriptions of Standard or
 > higher.
 >
-> [Go to Docker Trusted Registry](/datacenter/dtr/{{ site.dtr_version }}/guides/){: class="button outline-btn" }
+> [Go to Docker Trusted Registry](/ee/dtr/){: class="button outline-btn" }
 
 ## What it is
 
@@ -38,7 +38,7 @@ free-to-use, hosted Registry, plus additional features (organization accounts,
 automated builds, and more).
 
 Users looking for a commercially supported version of the Registry should look
-into [Docker Trusted Registry](/datacenter/dtr/2.1/guides/index.md).
+into [Docker Trusted Registry](/ee/dtr/).
 
 ## Requirements
 

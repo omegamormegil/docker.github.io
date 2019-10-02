@@ -14,6 +14,9 @@ options:
   description: Write to a file, instead of STDOUT
   deprecated: false
   experimental: false
+  experimentalcli: false
+  kubernetes: false
+  swarm: false
 examples: |-
   ### Create a backup that can then be used with `docker load`.
 
@@ -35,6 +38,14 @@ examples: |-
   $ docker save -o fedora-latest.tar fedora:latest
   ```
 
+  ### Save an image to a tar.gz file using gzip
+
+  You can use gzip to save the image file and make the backup smaller.
+
+  ```bash
+  docker save myimage:latest | gzip > myimage_latest.tar.gz
+  ```
+
   ### Cherry-pick particular tags
 
   You can even cherry-pick particular tags of an image repository.
@@ -44,4 +55,7 @@ examples: |-
   ```
 deprecated: false
 experimental: false
+experimentalcli: false
+kubernetes: false
+swarm: false
 

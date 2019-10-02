@@ -12,7 +12,7 @@ title: Legacy container links
 be removed. Unless you absolutely need to continue using it, we recommend that you use
 user-defined networks to facilitate communication between two containers instead of using
 `--link`. One feature that user-defined networks do not support that you can do
-with `--link` is sharing environmental variables between containers. However,
+with `--link` is sharing environment variables between containers. However,
 you can use other mechanisms such as volumes to share environment variables
 between containers in a more controlled way.
 >
@@ -87,7 +87,7 @@ Or, to bind port 5000 of the container to a dynamic port but only on the
 
     $ docker run -d -p 127.0.0.1::5000 training/webapp python app.py
 
-You can also bind UDP ports by adding a trailing `/udp`. For example:
+You can also bind UDP and SCTP (typically used by telecom protocols such as SIGTRAN, Diameter, and S1AP/X2AP) ports by adding a trailing `/udp` or `/sctp`. For example:
 
     $ docker run -d -p 127.0.0.1:80:5000/udp training/webapp python app.py
 

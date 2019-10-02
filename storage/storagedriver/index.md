@@ -10,16 +10,18 @@ redirect_from:
 ---
 
 To use storage drivers effectively, it's important to know how Docker builds and
-stores images, how these images are used by containers. You can use this
+stores images, and how these images are used by containers. You can use this
 information to make informed choices about the best way to persist data from
 your applications and avoid performance problems along the way.
 
-> **Note**: Storage drivers allow you to persist data in the writable layer of
-> your container. This is the least efficient way to persist data.
-> [Volumes](/storage/volumes/) or [bind mounts](/storage/bind-mounts/) provide
-> much better read and write performance, and volumes provide more security
-> and isolation than either storage drivers or bind mounts. Neither volumes nor
-> bind mounts use most of the concepts described in this topic.
+Storage drivers allow you to create data in the writable layer of your container.
+The files won't be persisted after the container is deleted, and both read and
+write speeds are lower than native file system performance. 
+
+ > **Note**: Operations that are known to be problematic include write-intensive database storage, 
+particularly when pre-existing data exists in the write-only layer. More details are provided in this document.
+
+[Learn how to use volumes](../volumes.md) to persist data and improve performance.
 
 ## Images and layers
 
@@ -28,14 +30,14 @@ instruction in the image's Dockerfile. Each layer except the very last one is
 read-only. Consider the following Dockerfile:
 
 ```conf
-FROM ubuntu:15.04
+FROM ubuntu:18.04
 COPY . /app
 RUN make /app
 CMD python /app/app.py
 ```
 
-This Dockerfile contains four commands, each of which creates a layer.  The
-`FROM` statement starts out by creating a layer from the `ubuntu:15.04` image.
+This Dockerfile contains four commands, each of which creates a layer. The
+`FROM` statement starts out by creating a layer from the `ubuntu:18.04` image.
 The `COPY` command adds some files from your Docker client's current directory.
 The `RUN` command builds your application using the `make` command. Finally,
 the last layer specifies what command to run within the container.
@@ -46,7 +48,7 @@ writable layer on top of the underlying layers. This layer is often called the
 "container layer". All changes made to the running container, such as writing
 new files, modifying existing files, and deleting files, are written to this thin
 writable container layer. The diagram below shows a container based on the Ubuntu
-15.04 image.
+18.04 image.
 
 ![Layers of a container based on the Ubuntu image](images/container-layers.jpg)
 
@@ -64,7 +66,7 @@ deleted. The underlying image remains unchanged.
 Because each container has its own writable container layer, and all changes are
 stored in this container layer, multiple containers can share access to the same
 underlying image and yet have their own data state. The diagram below shows
-multiple containers sharing the same Ubuntu 15.04 image.
+multiple containers sharing the same Ubuntu 18.04 image.
 
 ![Containers sharing same image](images/sharing-layers.jpg)
 
@@ -83,7 +85,7 @@ To view the approximate size of a running container, you can use the `docker ps 
 command. Two different columns relate to size.
 
 - `size`: the amount of data (on disk) that is used for the writable layer of
-  each container
+  each container.
 
 - `virtual size`: the amount of data used for the read-only image data
   used by the container plus the container's writable layer `size`.
@@ -97,7 +99,7 @@ command. Two different columns relate to size.
 The total disk space used by all of the running containers on disk is some
 combination of each container's `size` and the `virtual size` values. If
 multiple containers started from the same exact image, the total size on disk for
-these containers would be SUM (`size` of containers) plus one container's
+these containers would be SUM (`size` of containers) plus one image size
 (`virtual size`- `size`).
 
 This also does not count the following additional ways a container can take up
@@ -131,28 +133,28 @@ usually `/var/lib/docker/` on Linux hosts. You can see these layers being pulled
 in this example:
 
 ```bash
-$ docker pull ubuntu:15.04
-
-15.04: Pulling from library/ubuntu
-1ba8ac955b97: Pull complete
-f157c4e5ede7: Pull complete
-0b7e98f84c4c: Pull complete
-a3ed95caeb02: Pull complete
-Digest: sha256:5e279a9df07990286cce22e1b0f5b0490629ca6d187698746ae5e28e604a640e
-Status: Downloaded newer image for ubuntu:15.04
+$ docker pull ubuntu:18.04
+18.04: Pulling from library/ubuntu
+f476d66f5408: Pull complete
+8882c27f669e: Pull complete
+d9af21273955: Pull complete
+f5029279ec12: Pull complete
+Digest: sha256:ab6cb8de3ad7bb33e2534677f865008535427390b117d7939193f8d1a6613e34
+Status: Downloaded newer image for ubuntu:18.04
 ```
 
 Each of these layers is stored in its own directory inside the Docker host's
 local storage area. To examine the layers on the filesystem, list the contents
-of `/var/lib/docker/<storage-driver>/layers/`. This example uses `aufs`, which
-is the default storage driver:
+of `/var/lib/docker/<storage-driver>`. This example uses the `overlay2` 
+storage driver:
 
 ```bash
-$ ls /var/lib/docker/aufs/layers
-1d6674ff835b10f76e354806e16b950f91a191d3b471236609ab13a930275e24
-5dbb0cbe0148cf447b9464a358c1587be586058d9a4c9ce079320265e2bb94e7
-bef7199f2ed8e86fa4ada1309cfad3089e0542fec8894690529e4c04a7ca2d73
-ebf814eccfe98f2704660ca1d844e4348db3b5ccc637eb905d4818fbfb00a06a
+$ ls /var/lib/docker/overlay2
+16802227a96c24dcbeab5b37821e2b67a9f921749cd9a2e386d5a6d5bc6fc6d3
+377d73dbb466e0bc7c9ee23166771b35ebdbe02ef17753d79fd3571d4ce659d7
+3f02d96212b03e3383160d31d7c6aeca750d2d8a1879965b89fe8146594c453d
+ec1ec45792908e90484f7e629330666e7eee599f08729c93890a7205a6ba35f5
+l
 ```
 
 The directory names do not correspond to the layer IDs (this has been true since
@@ -162,7 +164,7 @@ Now imagine that you have two different Dockerfiles. You use the first one to
 create an image called `acme/my-base-image:1.0`.
 
 ```conf
-FROM ubuntu:16.10
+FROM ubuntu:18.04
 COPY . /app
 ```
 
@@ -210,10 +212,9 @@ layers are the same.
 
     ```bash
     $ docker build -t acme/my-base-image:1.0 -f Dockerfile.base .
-
-    Sending build context to Docker daemon  4.096kB
-    Step 1/2 : FROM ubuntu:16.10
-     ---> 31005225a745
+    Sending build context to Docker daemon  812.4MB
+    Step 1/2 : FROM ubuntu:18.04
+     ---> d131e0fa2585
     Step 2/2 : COPY . /app
      ---> Using cache
      ---> bd09118bcef6
@@ -253,7 +254,7 @@ layers are the same.
     $ docker history bd09118bcef6
     IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
     bd09118bcef6        4 minutes ago       /bin/sh -c #(nop) COPY dir:35a7eb158c1504e...   100B                
-    31005225a745        3 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B                  
+    d131e0fa2585        3 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B                  
     <missing>           3 months ago        /bin/sh -c mkdir -p /run/systemd && echo '...   7B                  
     <missing>           3 months ago        /bin/sh -c sed -i 's/^#\s*\(deb.*universe\...   2.78kB              
     <missing>           3 months ago        /bin/sh -c rm -rf /var/lib/apt/lists/*          0B                  
@@ -267,7 +268,7 @@ layers are the same.
     IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
     dbf995fc07ff        3 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "/a...   0B                  
     bd09118bcef6        5 minutes ago       /bin/sh -c #(nop) COPY dir:35a7eb158c1504e...   100B                
-    31005225a745        3 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B                  
+    d131e0fa2585        3 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B                  
     <missing>           3 months ago        /bin/sh -c mkdir -p /run/systemd && echo '...   7B                  
     <missing>           3 months ago        /bin/sh -c sed -i 's/^#\s*\(deb.*universe\...   2.78kB              
     <missing>           3 months ago        /bin/sh -c rm -rf /var/lib/apt/lists/*          0B                  
@@ -293,8 +294,8 @@ layer. This means that the writable layer is as small as possible.
 
 When an existing file in a container is modified, the storage driver performs a
 copy-on-write operation. The specifics steps involved depend on the specific
-storage driver. For the default `aufs` driver and the `overlay` and `overlay2`
-drivers, the copy-on-write operation follows this rough sequence:
+storage driver. For the `aufs`, `overlay`, and `overlay2` drivers, the 
+copy-on-write operation follows this rough sequence:
 
 *  Search through the image layers for the file to update. The process starts
    at the newest layer and works down to the base layer one layer at a time.
@@ -330,7 +331,7 @@ To verify the way that copy-on-write works, the following procedures spins up 5
 containers based on the `acme/my-final-image:1.0` image we built earlier and
 examines how much room they take up.
 
-> **Note**: This procedure doesn't work on Docker for Mac or Docker for Windows.
+> **Note**: This procedure doesn't work on Docker Desktop for Mac or Docker Desktop for Windows.
 
 1.  From a terminal on your Docker host, run the following `docker run` commands.
     The strings at the end are the IDs of each container.
@@ -396,33 +397,6 @@ If Docker had to make an entire copy of the underlying image stack each time it
 started a new container, container start times and disk space used would be
 significantly increased. This would be similar to the way that virtual machines
 work, with one or more virtual disks per virtual machine.
-
-## Data volumes and the storage driver
-
-When a container is deleted, any data written to the container that is not
-stored in a *data volume* is deleted along with the container.
-
-A data volume is a directory or file in the Docker host's filesystem that is
-mounted directly into a container. Data volumes are not controlled by the
-storage driver. Reads and writes to data volumes bypass the storage driver and
-operate at native host speeds. You can mount any number of data volumes into a
-container. Multiple containers can also share one or more data volumes.
-
-The diagram below shows a single Docker host running two containers. Each
-container exists inside of its own address space within the Docker host's local
-storage area (`/var/lib/docker/...`). There is also a single shared data volume
-located at `/data` on the Docker host. This is mounted directly into both
-containers.
-
-![Shared volume across containers](images/shared-volume.jpg)
-
-Data volumes reside outside of the local storage area on the Docker host,
-further reinforcing their independence from the storage driver's control. When
-a container is deleted, any data stored in data volumes persists on the Docker
-host.
-
-For detailed information about data volumes, see
-[Managing data in containers](/engine/tutorials/dockervolumes/).
 
 ## Related information
 

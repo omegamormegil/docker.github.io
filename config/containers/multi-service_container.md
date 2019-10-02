@@ -68,7 +68,7 @@ this in a few different ways.
     # If they are not both 0, then something is wrong
     if [ $PROCESS_1_STATUS -ne 0 -o $PROCESS_2_STATUS -ne 0 ]; then
       echo "One of the processes has already exited."
-      exit -1
+      exit 1
     fi
   done
   ```
@@ -79,6 +79,41 @@ this in a few different ways.
   FROM ubuntu:latest
   COPY my_first_process my_first_process
   COPY my_second_process my_second_process
+  COPY my_wrapper_script.sh my_wrapper_script.sh
+  CMD ./my_wrapper_script.sh
+  ```
+
+- If you have one main process that needs to start first and stay running but
+  you temporarily need to run some other processes (perhaps to interact with
+  the main process) then you can use bash's job control to facilitate that.
+  First, the wrapper script:
+
+
+  ```bash
+  #!/bin/bash
+
+  # turn on bash's job control
+  set -m
+
+  # Start the primary process and put it in the background
+  ./my_main_process &
+
+  # Start the helper process
+  ./my_helper_process
+
+  # the my_helper_process might need to know how to wait on the
+  # primary process to start before it does its work and returns
+
+
+  # now we bring the primary process back into the foreground
+  # and leave it there
+  fg %1
+  ```
+ 
+  ```conf
+  FROM ubuntu:latest
+  COPY my_main_process my_main_process
+  COPY my_helper_process my_helper_process
   COPY my_wrapper_script.sh my_wrapper_script.sh
   CMD ./my_wrapper_script.sh
   ```

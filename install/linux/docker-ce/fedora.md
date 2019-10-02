@@ -1,17 +1,17 @@
 ---
-description: Instructions for installing Docker CE on Fedora
+description: Instructions for installing Docker Engine - Community on Fedora
 keywords: requirements, apt, installation, fedora, rpm, install, uninstall, upgrade, update
 redirect_from:
 - /engine/installation/fedora/
 - /engine/installation/linux/fedora/
 - /engine/installation/linux/docker-ce/fedora/
-title: Get Docker CE for Fedora
+title: Get Docker Engine - Community for Fedora
 toc_max: 4
 ---
 
-To get started with Docker CE on Fedora, make sure you
+To get started with Docker Engine - Community on Fedora, make sure you
 [meet the prerequisites](#prerequisites), then
-[install Docker](#install-docker).
+[install Docker](#install-docker-ce).
 
 ## Prerequisites
 
@@ -25,8 +25,8 @@ and distributions for different Docker editions, see
 
 To install Docker, you need the 64-bit version of one of these Fedora versions:
 
-- 26
-- 27
+- 28
+- 29
 
 ### Uninstall old versions
 
@@ -49,11 +49,11 @@ $ sudo dnf remove docker \
 It's OK if `dnf` reports that none of these packages are installed.
 
 The contents of `/var/lib/docker/`, including images, containers, volumes, and
-networks, are preserved. The Docker CE package is now called `docker-ce`.
+networks, are preserved. The Docker Engine - Community package is now called `docker-ce`.
 
-## Install Docker CE
+## Install Docker Engine - Community
 
-You can install Docker CE in different ways, depending on your needs:
+You can install Docker Engine - Community in different ways, depending on your needs:
 
 - Most users
   [set up Docker's repositories](#install-using-the-repository) and install
@@ -70,8 +70,8 @@ You can install Docker CE in different ways, depending on your needs:
 
 ### Install using the repository
 
-Before you install Docker CE for the first time on a new host machine, you need
-to set up the Docker repository. Afterward, you can install and update Docker CE
+Before you install Docker Engine - Community for the first time on a new host machine, you need
+to set up the Docker repository. Afterward, you can install and update Docker
 from the repository.
 
 #### Set up the repository
@@ -85,9 +85,7 @@ from the repository.
     $ sudo dnf -y install dnf-plugins-core
     ```
 
-2.  Use the following command to set up the **stable** repository. You always
-    need the **stable** repository, even if you want to install builds from the
-    **edge** or **test** repositories as well.
+2.  Use the following command to set up the **stable** repository.
 
     ```bash
     $ sudo dnf config-manager \
@@ -95,45 +93,43 @@ from the repository.
         {{ download-url-base }}/docker-ce.repo
     ```
 
-3.  **Optional**: Enable the **edge** and **test** repositories. These
-    repositories are included in the `docker.repo` file above but are disabled
-    by default. You can enable them alongside the stable repository.
+> **Optional**: Enable the **nightly** or **test** repositories.
+>
+> These repositories are included in the `docker.repo` file above but are disabled
+> by default. You can enable them alongside the stable repository.  The following
+> command enables the **nightly** repository.
+>
+> ```bash
+> $ sudo dnf config-manager --set-enabled docker-ce-nightly
+> ```
+>
+> To enable the **test** channel, run the following command:
+>
+> ```bash
+> $ sudo dnf config-manager --set-enabled docker-ce-test
+> ```
+>
+> You can disable the **nightly** or **test** repository by running the
+> `dnf config-manager` command with the `--set-disabled` flag. To re-enable it,
+> use the `--set-enabled` flag. The following command disables the **nightly**
+> repository.
+>
+> ```bash
+> $ sudo dnf config-manager --set-disabled docker-ce-nightly
+> ```
+>
+> [Learn about **nightly** and **test** channels](/install/index.md).
+
+#### Install Docker Engine - Community
+
+1.  Install the _latest version_ of Docker Engine - Community and containerd, or go to the next step to install a specific version:
 
     ```bash
-    $ sudo dnf config-manager --set-enabled docker-ce-edge
+    $ sudo dnf install docker-ce docker-ce-cli containerd.io
     ```
 
-    ```bash
-    $ sudo dnf config-manager --set-enabled docker-ce-test
-    ```
-
-    You can disable the **edge** or **test** repository by running the
-    `dnf config-manager` command with the `--disable` flag. To re-enable it, use
-    the `--enable` flag. The following command disables the **edge** repository.
-
-    ```bash
-    $ sudo dnf config-manager --set-disabled docker-ce-edge
-    ```
-
-    > **Note**: Starting with Docker 17.06, stable releases are also pushed to
-    > the **edge** and **test** repositories.
-
-    [Learn about **stable** and **edge** channels](/install/index.md).
-
-#### Install Docker CE
-
-1.  Install the latest version of Docker CE, or go to the next step to install a
-    specific version.
-
-    ```bash
-    $ sudo dnf install docker-ce
-    ```
-
-    If this is the first time you are installing a package from a recently added
-    repository, you are prompted to accept the GPG key, and
-    the key's fingerprint is shown. Verify that the fingerprint matches
-    `060A 61C5 1B55 8A7F 742B  77AA C52F EB6B 621E 9F35` and if so, accept the
-    key.
+    If prompted to accept the GPG key, verify that the fingerprint matches
+    `060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35`, and if so, accept it.
 
     > Got multiple Docker repositories?
     >
@@ -141,38 +137,45 @@ from the repository.
     > or updating without specifying a version in the `dnf install` or
     > `dnf update` command always installs the highest possible version,
     > which may not be appropriate for your stability needs.
-    {:.warning-vanilla}
 
-2.  On production systems, you should install a specific version of Docker CE
-    instead of always using the latest. List the available versions. This
-    example uses the `sort -r` command to sort the results by version number,
-    highest to lowest, and is truncated.
+    Docker is installed but not started. The `docker` group is created, but no users are added to the group.
+
+2.  To install a _specific version_ of Docker Engine - Community, list the available versions
+    in the repo, then select and install:
+
+    a. List and sort the versions available in your repo. This example sorts
+       results by version number, highest to lowest, and is truncated:
 
     ```bash
     $ dnf list docker-ce  --showduplicates | sort -r
 
-    docker-ce.x86_64  {{ site.docker_ce_stable_version }}.0.fc26                              docker-ce-stable
+    docker-ce.x86_64  3:18.09.1-3.fc28                 docker-ce-stable
+    docker-ce.x86_64  3:18.09.0-3.fc28                 docker-ce-stable
+    docker-ce.x86_64  18.06.1.ce-3.fc28                docker-ce-stable
+    docker-ce.x86_64  18.06.0.ce-3.fc28                docker-ce-stable
     ```
 
-    The contents of the list depend upon which repositories are enabled, and
-    are specific to your version of Fedora (indicated by the `.fc26` suffix
-    on the version, in this example). Choose a specific version to install. The
-    second column is the version string. The third column is the repository
-    name, which indicates which repository the package is from and by extension
-    its stability level. To install a specific version, append the version
-    string to the package name and separate them by a hyphen (`-`):
+    The list returned depends on which repositories are enabled, and is specific
+    to your version of Fedora (indicated by the `.fc28` suffix in this example).
+
+    b. Install a specific version by its fully qualified package name, which is
+       the package name (`docker-ce`) plus the version string (2nd column) up to
+       the first hyphen, separated by a hyphen (`-`), for example,
+       `docker-ce-3:18.09.1`.
 
     ```bash
-    $ sudo dnf -y install docker-ce-<VERSION>
+    $ sudo dnf -y install docker-ce-<VERSION_STRING> docker-ce-cli-<VERSION_STRING> containerd.io
     ```
 
-4.  Start Docker.
+    Docker is installed but not started. The `docker` group is created, but no users are added to the group.
+
+3.  Start Docker.
 
     ```bash
     $ sudo systemctl start docker
     ```
 
-5.  Verify that Docker CE is installed correctly by running the `hello-world`
+4.  Verify that Docker Engine - Community is installed correctly by running the `hello-world`
     image.
 
     ```bash
@@ -182,32 +185,31 @@ from the repository.
     This command downloads a test image and runs it in a container. When the
     container runs, it prints an informational message and exits.
 
-Docker CE is installed and running. You need to use `sudo` to run Docker
-commands. Continue to
-[Linux postinstall](/install/linux/linux-postinstall.md) to allow
+Docker Engine - Community is installed and running. You need to use `sudo` to run Docker
+commands. Continue to [Linux postinstall](/install/linux/linux-postinstall.md) to allow
 non-privileged users to run Docker commands and for other optional configuration
 steps.
 
-#### Upgrade Docker CE
+#### Upgrade Docker Engine - Community
 
-To upgrade Docker CE, follow the
-[installation instructions](#install-docker), choosing the new version you want
-to install.
+To upgrade Docker Engine - Community, follow the [installation instructions](#install-docker-ce),
+choosing the new version you want to install.
 
 ### Install from a package
 
 If you cannot use Docker's repository to install Docker, you can download the
 `.rpm` file for your release and install it manually. You need to download
-a new file each time you want to upgrade Docker CE.
+a new file each time you want to upgrade Docker Engine - Community.
 
 1.  Go to [{{ download-url-base }}/]({{ download-url-base }}/) and choose your
     version of Fedora. Go to `x86_64/stable/Packages/`
     and download the `.rpm` file for the Docker version you want to install.
 
-    > **Note**: To install an **edge**  package, change the word
-    > `stable` in the above URL to `edge`.
+    > **Note**: To install a **nightly**  or **test** (pre-release) package,
+    > change the word `stable` in the above URL to `nightly` or `test`.
+    > [Learn about **nightly** and **test** channels](/install/index.md).
 
-2.  Install Docker CE, changing the path below to the path where you downloaded
+2.  Install Docker Engine - Community, changing the path below to the path where you downloaded
     the Docker package.
 
     ```bash
@@ -220,7 +222,7 @@ a new file each time you want to upgrade Docker CE.
     $ sudo systemctl start docker
     ```
 
-4.  Verify that Docker CE is installed correctly by running the `hello-world`
+4.  Verify that Docker Engine - Community is installed correctly by running the `hello-world`
     image.
 
     ```bash
@@ -230,20 +232,20 @@ a new file each time you want to upgrade Docker CE.
     This command downloads a test image and runs it in a container. When the
     container runs, it prints an informational message and exits.
 
-Docker CE is installed and running. You need to use `sudo` to run Docker commands.
+Docker Engine - Community is installed and running. You need to use `sudo` to run Docker commands.
 Continue to [Post-installation steps for Linux](/install/linux/linux-postinstall.md) to allow
 non-privileged users to run Docker commands and for other optional configuration
 steps.
 
-#### Upgrade Docker CE
+#### Upgrade Docker Engine - Community
 
-To upgrade Docker CE, download the newer package file and repeat the
+To upgrade Docker Engine - Community, download the newer package file and repeat the
 [installation procedure](#install-from-a-package), using `dnf -y upgrade`
 instead of `dnf -y install`, and pointing to the new file.
 
 {% include install-script.md %}
 
-## Uninstall Docker CE
+## Uninstall Docker Engine - Community
 
 1.  Uninstall the Docker package:
 
@@ -265,4 +267,4 @@ You must delete any edited configuration files manually.
 
 - Continue to [Post-installation steps for Linux](/install/linux/linux-postinstall.md)
 
-- Continue with the [User Guide](/engine/userguide/index.md).
+- Continue with the [User Guide](/get-started/index.md).

@@ -9,7 +9,10 @@ notoc: true
 Usage: ps [options] [SERVICE...]
 
 Options:
--q    Only display IDs
+    -q, --quiet          Only display IDs
+    --services           Display services
+    --filter KEY=VAL     Filter services by a property
+    -a, --all            Show all stopped containers (including those created by the run command)
 ```
 
 Lists containers.
@@ -17,7 +20,7 @@ Lists containers.
 ```bash
 $ docker-compose ps
          Name                        Command                 State             Ports
---------------------------------------------------------------------------------------------
-mywordpress_db_1          docker-entrypoint.sh mysqld      Up           3306/tcp
-mywordpress_wordpress_1   /entrypoint.sh apache2-for ...   Restarting   0.0.0.0:8000->80/tcp
+---------------------------------------------------------------------------------------------
+mywordpress_db_1          docker-entrypoint.sh mysqld      Up (healthy)  3306/tcp
+mywordpress_wordpress_1   /entrypoint.sh apache2-for ...   Restarting    0.0.0.0:8000->80/tcp
 ```

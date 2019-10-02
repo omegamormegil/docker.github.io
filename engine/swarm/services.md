@@ -74,6 +74,27 @@ $ docker service create --name helloworld alpine:3.6 ping docker.com
 For more details about image tag resolution, see
 [Specify the image version the service should use](#specify-the-image-version-the-service-should-use).
 
+### gMSA for Swarm
+
+Swarm now allows using a Docker Config as a gMSA credential spec - a requirement for Active Directory-authenticated applications. This reduces the burden of distributing credential specs to the nodes they're used on. 
+
+The following example assumes a gMSA and its credential spec (called credspec.json) already exists, and that the nodes being deployed to are correctly configured for the gMSA.
+
+To use a Config as a credential spec, first create the Docker Config containing the credential spec:
+
+
+```bash
+docker config create credspec credspec.json
+```
+
+Now, you should have a Docker Config named credspec, and you can create a service using this credential spec. To do so, use the --credential-spec flag with the config name, like this:
+
+```bash
+docker service create --credential-spec="config://credspec" <your image>
+```
+
+Your service will use the gMSA credential spec when it starts, but unlike a typical Docker Config (used by passing the --config flag), the credential spec will not be mounted into the container.
+
 ### Create a service using an image on a private registry
 
 If your image is available on a private registry which requires login, use the
@@ -93,6 +114,43 @@ $ docker service  create \
 This passes the login token from your local client to the swarm nodes where the
 service is deployed, using the encrypted WAL logs. With this information, the
 nodes are able to log into the registry and pull the image.
+
+### Provide credential specs for managed service accounts
+
+ In Enterprise Edition 3.0, security is improved through the centralized distribution and management of Group Managed Service Account(gMSA) credentials using Docker Config functionality. Swarm now allows using a Docker Config as a gMSA credential spec, which reduces the burden of distributing credential specs to the nodes on which they are used. 
+
+ **Note**: This option is only applicable to services using Windows containers.
+
+ Credential spec files are applied at runtime, eliminating the need for host-based credential spec files or registry entries - no gMSA credentials are written to disk on worker nodes. You can make credential specs available to Docker Engine running swarm kit worker nodes before a container starts. When deploying a service using a gMSA-based config, the credential spec is passed directly to the runtime of containers in that service.
+
+ The `--credential-spec` must be one of the following formats:
+
+ - `file://<filename>`: The referenced file must be present in the `CredentialSpecs` subdirectory in the docker data directory, which defaults to `C:\ProgramData\Docker\` on Windows. For example, specifying `file://spec.json` loads `C:\ProgramData\Docker\CredentialSpecs\spec.json`.
+- `registry://<value-name>`: The credential spec is read from the Windows registry on the daemon’s host. 
+- `config://<config-name>`: The config name is automatically converted to the config ID in the CLI. 
+The credential spec contained in the specified `config` is used.
+
+ The following simple example retrieves the gMSA name and JSON contents from your Active Directory (AD) instance:
+
+ ```
+name="mygmsa"
+contents="{...}"
+echo $contents > contents.json
+```
+Make sure that the nodes to which you are deploying are correctly configured for the gMSA.
+
+ To use a Config as a credential spec, create a Docker Config in a credential spec file named `credpspec.json`. 
+ You can specify any name for the name of the `config`. 
+
+```
+docker config create --label com.docker.gmsa.name=mygmsa credspec credspec.json
+```
+Now you can create a service using this credential spec. Specify the `--credential-spec` flag with the config name:
+```
+docker service create --credential-spec="config://credspec" <your image>
+```
+
+ Your service uses the gMSA credential spec when it starts, but unlike a typical Docker Config (used by passing the --config flag), the credential spec is not mounted into the container.
 
 ## Update a service
 
@@ -418,7 +476,7 @@ option to the `--publish` flag.
 > `--mode=global` flag on `docker service create`, it is difficult to know
 > which nodes are running the service to route work to them.
 
-##### Example: Run a `nginx` web server service on every swarm node
+##### Example: Run an `nginx` web server service on every swarm node
 
 [nginx](https://hub.docker.com/_/nginx/) is an open source reverse proxy, load
 balancer, HTTP cache, and a web server. If you run nginx as a service using the
@@ -565,7 +623,7 @@ services, you specify the number of replica tasks for the swarm manager to
 schedule onto available nodes. For global services, the scheduler places one
 task on each available node that meets the service's
 [placement constraints](#placement-constraints) and
-[resource requirements](#reserve-cpu-or-memory-for-a-service).
+[resource requirements](#reserve-memory-or-cpus-for-a-service).
 
 You control the type of service using the `--mode` flag. If you don't specify a
 mode, the service defaults to `replicated`. For replicated services, you specify
@@ -621,20 +679,20 @@ labels to ensure that your service is deployed to the appropriate swarm nodes.
 
 Use placement constraints to control the nodes a service can be assigned to. In
 the following example, the service only runs on nodes with the
-[label](engine/swarm/manage-nodes.md#add-or-remove-label-metadata)
-`region` set to `east`. If no appropriately-labelled nodes are available,
-deployment fails. The `--constraint` flag uses an equality operator
-(`==` or `!=`). For replicated services, it is possible that all services
-run on the same node, or each node only runs one replica, or that some nodes
-don't run any replicas. For global services, the service runs on every node
-that meets the placement constraint and any
-[resource requirements](#reserve-cpu-or-memory-for-a-service).
+[label](manage-nodes.md#add-or-remove-label-metadata) `region` set
+to `east`. If no appropriately-labelled nodes are available, tasks will wait in
+`Pending` until they become available. The `--constraint` flag uses an equality
+operator (`==` or `!=`). For replicated services, it is possible that all
+services run on the same node, or each node only runs one replica, or that some
+nodes don't run any replicas. For global services, the service runs on every
+node that meets the placement constraint and any [resource
+requirements](#reserve-memory-or-cpus-for-a-service).
 
 ```bash
 $ docker service create \
   --name my-nginx \
   --replicas 5 \
-  --constraint region==east \
+  --constraint node.labels.region==east \
   nginx
 ```
 
@@ -648,9 +706,9 @@ all nodes where `region` is set to `east` and `type` is not set to `devel`:
 ```bash
 $ docker service create \
   --name my-nginx \
-  --global \
-  --constraint region==east \
-  --constraint type!=devel \
+  --mode global \
+  --constraint node.labels.region==east \
+  --constraint node.labels.type!=devel \
   nginx
 ```
 
@@ -664,7 +722,7 @@ For more information on constraints, refer to the `docker service create`
 #### Placement preferences
 
 While [placement constraints](#placement-constraints) limit the nodes a service
-can run on, _placement preferences_ try to place services on appropriate nodes
+can run on, _placement preferences_ try to place tasks on appropriate nodes
 in an algorithmic way (currently, only spread evenly). For instance, if you
 assign each node a `rack` label, you can set a placement preference to spread
 the service evenly across nodes with the `rack` label, by value. This way, if
@@ -696,7 +754,7 @@ $ docker service create \
 > proportion to any of the other groups identified by a specific label
 > value. In a sense, a missing label is the same as having the label with
 > a null value attached to it. If the service should **only** run on
-> nodes with the label being used for the the spread preference, the
+> nodes with the label being used for the spread preference, the
 > preference should be combined with a constraint.
 
 You can specify multiple placement preferences, and they are processed in the
@@ -846,14 +904,19 @@ mounts. This principle also applies to services.
 You can create two types of mounts for services in a swarm, `volume` mounts or
 `bind` mounts. Regardless of which type of mount you use, configure it using the
 `--mount` flag when you create a service, or the `--mount-add` or `--mount-rm`
-flag when updating an existing service.. The default is a data volume if you
+flag when updating an existing service. The default is a data volume if you
 don't specify a type.
 
 #### Data volumes
 
-Data volumes are storage that remain alive after a container for a task has
-been removed. The preferred method to mount volumes is to leverage an existing
-volume:
+Data volumes are storage that exist independently of a container. The
+lifecycle of data volumes under swarm services is similar to that under
+containers. Volumes outlive tasks and services, so their removal must be
+managed separately. Volumes can be created before deploying a service, or if
+they don't exist on a particular host when a task is scheduled there, they are
+created automatically according to the volume specification on the service.
+
+To use existing data volumes with a service use the `--mount` flag:
 
 ```bash
 $ docker service create \
@@ -862,11 +925,10 @@ $ docker service create \
   <IMAGE>
 ```
 
-For more information on how to create a volume, see the `volume create`
-[CLI reference](/engine/reference/commandline/volume_create.md).
-
-The following method creates the volume at deployment time when the scheduler
-dispatches a task, just before starting the container:
+If a volume with the same `<VOLUME-NAME>` does not exist when a task is
+scheduled to a particular host, then one is created. The default volume
+driver is `local`.  To use a different volume driver with this create-on-demand
+pattern, specify the driver and its options with the `--mount` flag:
 
 ```bash
 $ docker service create \
@@ -875,18 +937,8 @@ $ docker service create \
   <IMAGE>
 ```
 
-> **Important:** If your volume driver accepts a comma-separated list as an option,
-> you must escape the value from the outer CSV parser. To escape a `volume-opt`,
-> surround it with double quotes (`"`) and surround the entire mount parameter
-> with single quotes (`'`).
->
-> For example, the `local` driver accepts mount options as a comma-separated
-> list in the `o` parameter. This example shows the correct way to escape the list.
->
->     $ docker service create \
->          --mount 'type=volume,src=<VOLUME-NAME>,dst=<CONTAINER-PATH>,volume-driver=local,volume-opt=type=nfs,volume-opt=device=<nfs-server>:<nfs-path>,"volume-opt=o=addr=<nfs-address>,vers=4,soft,timeo=180,bg,tcp,rw"'
->         --name myservice \
->         <IMAGE>
+For more information on how to create data volumes and the use of volume
+drivers, see [Use volumes](/storage/volumes/).
 
 
 #### Bind mounts
@@ -929,9 +981,9 @@ The following examples show bind mount syntax:
 > - The Docker swarm mode scheduler may reschedule your running service
 >   containers at any time if they become unhealthy or unreachable.
 >
-> - Host bind mounts are completely non-portable. When you use bind mounts,
->   there is no guarantee that your application runs the same way in
->   development as it does in production.
+> - Host bind mounts are non-portable. When you use bind mounts, there is no
+>   guarantee that your application runs the same way in development as it does
+>   in production.
 
 ### Create services using templates
 
@@ -953,6 +1005,7 @@ Valid placeholders for the Go template are:
 | `.Service.Name`   | Service name   |
 | `.Service.Labels` | Service labels |
 | `.Node.ID`        | Node ID        |
+| `.Node.Hostname`  | Node hostname  |
 | `.Task.Name`      | Task name      |
 | `.Task.Slot`      | Task slot      |
 
@@ -961,13 +1014,13 @@ Valid placeholders for the Go template are:
 This example sets the template of the created containers based on the
 service's name and the ID of the node where the container is running:
 
-```bash
 {% raw %}
+```bash
 $ docker service create --name hosttempl \
                         --hostname="{{.Node.ID}}-{{.Service.Name}}"\
                          busybox top
-{% endraw %}
 ```
+{% endraw %}
 
 To see the result of using the template, use the `docker service ps` and
 `docker inspect` commands.
@@ -979,11 +1032,11 @@ ID            NAME         IMAGE                                                
 wo41w8hg8qan  hosttempl.1  busybox:latest@sha256:29f5d56d12684887bdfa50dcd29fc31eea4aaf4ad3bec43daf19026a7ce69912  2e7a8a9c4da2  Running        Running about a minute ago
 ```
 
-```bash
 {% raw %}
+```bash
 $ docker inspect --format="{{.Config.Hostname}}" hosttempl.1.wo41w8hg8qanxwjwsg4kxpprj
-{% endraw %}
 ```
+{% endraw %}
 
 ## Learn More
 

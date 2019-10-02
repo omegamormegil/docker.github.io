@@ -40,7 +40,7 @@ All container logs are aggregated within the `xxxxlog` storage account.
 
 ## Where do I report problems or bugs?
 
-Send an email to <docker-for-iaas@docker.com> or post to the [Docker for Azure](https://github.com/docker/for-azure) GitHub repositories.
+Search for existing issues, or create a new one, within the [Docker for Azure](https://github.com/docker/for-azure) GitHub repositories.
 
 In Azure, if your resource group is misbehaving, run the following diagnostic tool from one of the managers - this collects your docker logs and sends them to Docker:
 
@@ -90,6 +90,8 @@ All regions can be found here: [Microsoft Azure Regions](https://azure.microsoft
 An excerpt of the above regions to use when you create your service principal are:
 
 ```none
+australiacentral
+australiacentral2
 australiaeast
 australiasoutheast
 brazilsouth
@@ -100,6 +102,8 @@ centralus
 eastasia
 eastus
 eastus2
+francecentral
+francesouth
 japaneast
 japanwest
 koreacentral
@@ -111,8 +115,8 @@ southeastasia
 southindia
 uksouth
 ukwest
-usgovvirginia
 usgoviowa
+usgovvirginia
 westcentralus
 westeurope
 westindia
